@@ -106,9 +106,13 @@ function updateValues() {
     vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
 
     // reset the canvas on every requestAnimationFrame and set its' sizes to the current width and height
-    canvas.width = vw;
-    canvas.height = vh;
-    
+    if (!(vw < 1394 || vh < 379)) {
+        canvas.width = vw;
+        canvas.height = vh;   
+    } else {
+        canvas.width = 0;
+        canvas.height = 0;
+    }
     // update the time
     if (paused == true) {
         startTime = new Date(resumedTime);
@@ -156,30 +160,36 @@ function draw() {
     let firstOffset = 2 * Math.PI / 3;
     let secondOffset = 4 * Math.PI / 3;
 
-    // set the left and top properties for each card
-    cards.description.style = `
+    if (!(vw < 1394 || vh < 379)) {
+        // set the left and top properties for each card
+        cards.description.style = `
+            position: absolute;
+            left: ${positions.centerX + positions.radius * Math.cos((startTime.getTime() - totalDelay) * velocity) - 150}px;
+            top: ${positions.y + positions.radius * Math.sin((startTime.getTime() - totalDelay) * velocity) - 100}px;
+        `
+
+        cards.github.style = `
         position: absolute;
-        left: ${positions.centerX + positions.radius * Math.cos((startTime.getTime() - totalDelay) * velocity) - 150}px;
-        top: ${positions.y + positions.radius * Math.sin((startTime.getTime() - totalDelay) * velocity) - 100}px;
-    `
+        left: ${positions.centerX + positions.radius * Math.cos((startTime.getTime() - totalDelay) * velocity + firstOffset) - 150}px;
+        top: ${positions.y + positions.radius * Math.sin((startTime.getTime() - totalDelay) * velocity + firstOffset) - 100}px;
+        `
 
-    cards.github.style = `
-    position: absolute;
-    left: ${positions.centerX + positions.radius * Math.cos((startTime.getTime() - totalDelay) * velocity + firstOffset) - 150}px;
-    top: ${positions.y + positions.radius * Math.sin((startTime.getTime() - totalDelay) * velocity + firstOffset) - 100}px;
-    `
-
-    cards.socials.style = `
-    position: absolute;
-    left: ${positions.centerX + positions.radius * Math.cos((startTime.getTime() - totalDelay) * velocity + secondOffset) - 150}px;
-    top: ${positions.y + positions.radius * Math.sin((startTime.getTime() - totalDelay) * velocity + secondOffset) - 100}px;
-    `
-
-    // initialize the objects with the coords for each card
-    descriptionCoords = new Rectangle(parseInt(cards.description.style.left), parseInt(cards.description.style.top), cards.width, cards.height);
-    githubCoords = new Rectangle(parseInt(cards.github.style.left), parseInt(cards.github.style.top), cards.width, cards.height)
-    socialsCoords = new Rectangle(parseInt(cards.socials.style.left), parseInt(cards.socials.style.top), cards.width, cards.height)
-
+        cards.socials.style = `
+        position: absolute;
+        left: ${positions.centerX + positions.radius * Math.cos((startTime.getTime() - totalDelay) * velocity + secondOffset) - 150}px;
+        top: ${positions.y + positions.radius * Math.sin((startTime.getTime() - totalDelay) * velocity + secondOffset) - 100}px;
+        `
+    
+        // initialize the objects with the coords for each card
+        descriptionCoords = new Rectangle(parseInt(cards.description.style.left), parseInt(cards.description.style.top), cards.width, cards.height);
+        githubCoords = new Rectangle(parseInt(cards.github.style.left), parseInt(cards.github.style.top), cards.width, cards.height)
+        socialsCoords = new Rectangle(parseInt(cards.socials.style.left), parseInt(cards.socials.style.top), cards.width, cards.height)
+    } else {
+        cards.description.style = ``;
+        cards.github.style = ``;
+        cards.socials.style = ``;
+    }
+    
     const ballRadius = 10;
 
     // draw the ball at the center of each card
@@ -193,8 +203,13 @@ function draw() {
     // drawLine(socialsCoords.topLeft.x + cards.width/2, socialsCoords.topLeft.y + cards.height/2, positions.centerX, positions.y);
 
     // if the mouse gets inside one of the cards, then pause the animation
-    if (checkIfInsideRectangle(mouseCoords, descriptionCoords) || checkIfInsideRectangle(mouseCoords, githubCoords) ||
-    checkIfInsideRectangle(mouseCoords, socialsCoords)) {
+    if (vw < 1394 || vh < 379) {
+        if (paused === false) {
+            paused = true;
+            resumedTime = startTime.getTime();
+        }
+    } else if ((checkIfInsideRectangle(mouseCoords, descriptionCoords) || checkIfInsideRectangle(mouseCoords, githubCoords) ||
+    checkIfInsideRectangle(mouseCoords, socialsCoords))) {
         if (paused === false) {
             paused = true;
             resumedTime = startTime.getTime();
@@ -205,6 +220,19 @@ function draw() {
             totalDelay += new Date().getTime() - resumedTime;
         }
     }
+
+    // if (checkIfInsideRectangle(mouseCoords, descriptionCoords) || checkIfInsideRectangle(mouseCoords, githubCoords) ||
+    // checkIfInsideRectangle(mouseCoords, socialsCoords) || vw < 1394 || vh < 379) {
+    //     if (paused === false) {
+    //         paused = true;
+    //         resumedTime = startTime.getTime();
+    //     }
+    // } else {
+    //     if (paused !== false) {
+    //         paused = false;
+    //         totalDelay += new Date().getTime() - resumedTime;
+    //     }
+    // }
 
     requestAnimationFrame(draw);
 }
